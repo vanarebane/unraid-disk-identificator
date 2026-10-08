@@ -19,6 +19,19 @@
     return m ? decodeURIComponent(m[1]) : null;
   }
 
+  /* Optional location label (from the settings page), then the button. */
+  function fill(cell, name) {
+    var d = map && map.disks[name];
+    if (d && d.label) {
+      var lbl = document.createElement('span');
+      lbl.className = 'diskid-label';
+      lbl.textContent = d.label;
+      lbl.title = 'Location ' + d.label;
+      cell.appendChild(lbl);
+    }
+    cell.appendChild(makeButton(name));
+  }
+
   function makeButton(name) {
     var d = map && map.disks[name];
     var el = document.createElement('span');
@@ -44,8 +57,9 @@
     var on = !!d.on;
     el.className = 'diskid-btn' + (on ? ' diskid-on diskid-' + d.color : '') + (busy[name] ? ' diskid-busy' : '');
     el.setAttribute('aria-pressed', on ? 'true' : 'false');
-    var where = 'Controller ' + d.key.replace(/^(\d+):(\d+):(\d+)$/, '$1, bay $2:$3');
-    if (d.target !== d.key) where += ' (LED ' + d.target.replace(/^\d+:/, '') + ')';
+    // key "sas3-0:1:3" = sas3ircu controller 0, enclosure 1, slot 3
+    var where = d.key.replace(/^sas(\d)-(\d+):(\d+):(\d+)$/, 'SAS$1 controller $2, bay $3:$4');
+    if (d.target !== d.key) where += ' (LED ' + d.target.replace(/^[^:]+:/, '') + ')';
     el.title = (on ? 'Turn identification LED off' : 'Turn identification LED on') + '\n' + where + ' - /dev/' + d.device;
   }
 
@@ -66,7 +80,7 @@
         td.textContent = 'ID';
       } else if (!tr.classList.contains('pool_header')) {
         var name = diskName(tr.cells[0]);
-        if (name) td.appendChild(makeButton(name));
+        if (name) fill(td, name);
       }
       tr.insertBefore(td, tr.cells[1] || null);
     }
@@ -86,7 +100,7 @@
         span.textContent = 'ID';
       } else {
         var name = diskName(cell);
-        if (name) span.appendChild(makeButton(name));
+        if (name) fill(span, name);
       }
       cell.appendChild(span);
     }

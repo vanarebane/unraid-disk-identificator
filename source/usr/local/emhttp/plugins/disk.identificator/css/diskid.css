@@ -4,22 +4,33 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 22px;
+  /* square, 90% of the row's line height (lh = inherited line-height, so no font-size/line-height here) */
+  height: 18px;
+  height: 0.9lh;
+  aspect-ratio: 1;
+  box-sizing: border-box;
   border-radius: 4px;
-  background: #9e9e9e;
-  color: #fff;
+  color: var(--dashboard-icon-color, #fff);
+  background-color: var(--dashboard-title-action-color, #9e9e9e);
   cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
   vertical-align: middle;
   user-select: none;
-  transition: background-color .15s, box-shadow .15s;
+  transition: opacity .15s, box-shadow .15s;
 }
-.diskid-btn:hover { background: #7c7c7c; }
+.diskid-btn > i { font-size: 0.85em; line-height: 1; }
+.diskid-btn:hover { opacity: .75; }
 .diskid-btn:focus-visible { outline: 2px solid #4a90d9; outline-offset: 1px; }
 .diskid-btn.diskid-busy { opacity: .5; cursor: progress; }
 .diskid-na { color: #9e9e9e; }
+.diskid-label {
+  display: inline-block;
+  max-width: calc(100% - 1.2lh);
+  margin-right: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
 
 .diskid-btn.diskid-on { animation: diskid-pulse 1.2s ease-in-out infinite; }
 .diskid-btn.diskid-red    { background: #e22828; --diskid-glow: rgba(226, 40, 40, .55); }
@@ -37,11 +48,11 @@
 }
 
 /* Main: the ID column is inserted as column 2, so re-balance Unraid's nth-child widths. */
-table.disk_status.diskid-main tr > td.diskid-col { width: 4%; text-align: center; }
-table.disk_status.diskid-main tr > td:nth-child(3) { width: 26%; text-align: left; }
+table.disk_status.diskid-main tr > td.diskid-col { width: 7%; text-align: right; white-space: nowrap; }
+table.disk_status.diskid-main tr > td:nth-child(3) { width: 23%; text-align: left; }
 table.disk_status.diskid-main tr > td:nth-child(4) { width: 8%; text-align: right; }
 table.disk_status.diskid-main tr > td:nth-child(n + 5) { width: 7%; text-align: right; }
-table.disk_status.diskid-main tr.offline > td:nth-child(3) { width: 39%; }
+table.disk_status.diskid-main tr.offline > td:nth-child(3) { width: 36%; }
 table.disk_status.diskid-main tr.offline > td:nth-child(n + 4) { width: 5.5%; }
 
 /* Dashboard: shrink the existing span columns to make room for the ID column (26+4*18 -> 24+4*16+10). */
@@ -53,6 +64,7 @@ tbody.diskid-dash tr > td > span.diskid-dcol {
   min-width: 10%;
   max-width: 10%;
   text-align: center;
+  white-space: nowrap;
 }
 
 /* Settings page */
@@ -63,6 +75,8 @@ tbody.diskid-dash tr > td > span.diskid-dcol {
 .diskid-settings tr.diskid-remapped td { background: rgba(240, 160, 0, .12); }
 .diskid-settings .diskid-muted { opacity: .6; }
 .diskid-settings select { min-width: 0; margin: 0; }
+.diskid-settings input.diskid-loc { width: 8em; min-width: 0; margin: 0; }
+.diskid-settings th input[type=button] { margin: 0 0 0 8px; padding: 2px 8px; font-size: .9em; }
 .diskid-settings .diskid-swatch {
   display: inline-block; width: 12px; height: 12px; border-radius: 50%;
   margin-right: 6px; vertical-align: middle; border: 1px solid rgba(0, 0, 0, .2);

@@ -32,6 +32,7 @@ function disk_map(array $inv, array $cfg): array {
       'target' => $target,
       'color'  => di_color($target, $cfg),
       'on'     => isset($states[$target]),
+      'label'  => di_label($loc['key'], $cfg),
     ];
   }
   return $disks;
@@ -43,7 +44,7 @@ $cfg = di_config();
 switch ($action) {
 case 'map':
   $inv = di_inventory();
-  reply(['ok' => true, 'tool' => (bool)$inv['tool'], 'dashboard' => $cfg['dashboard'], 'main' => $cfg['main'], 'disks' => disk_map($inv, $cfg)]);
+  reply(['ok' => true, 'tool' => (bool)$inv['tools'], 'dashboard' => $cfg['dashboard'], 'main' => $cfg['main'], 'disks' => disk_map($inv, $cfg)]);
 
 case 'scan':
   $inv = di_inventory(!empty($_GET['refresh']));

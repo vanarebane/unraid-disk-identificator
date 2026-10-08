@@ -16,10 +16,15 @@ STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
 cp -r source/. "$STAGE/"
 find "$STAGE" -type f \( -name '*.php' -o -name '*.page' -o -name '*.js' -o -name '*.css' -o -name '*.md' \) -exec sed -i 's/\r$//' {} +
-find "$STAGE" -type d -exec chmod 755 {} +
-find "$STAGE" -type f -exec chmod 644 {} +
 
-tar -C "$STAGE" --owner=0 --group=0 --numeric-owner -cJf "$PKG" usr
+# Set modes in the archive itself (chmod does not stick on Windows filesystems):
+# 644/755 for the web files, 755 for the bundled sas2ircu/sas3ircu.
+TAR="$STAGE.tar"
+TAROPTS=(-C "$STAGE" --owner=0 --group=0 --numeric-owner)
+tar "${TAROPTS[@]}" --mode='u=rwX,go=rX' --exclude='usr/local/bin/*' -cf "$TAR" usr
+tar "${TAROPTS[@]}" --mode=755 -rf "$TAR" usr/local/bin/sas2ircu usr/local/bin/sas3ircu
+xz -9 -c "$TAR" > "$PKG"
+rm -f "$TAR"
 
 MD5=$(md5sum "$PKG" | cut -d' ' -f1)
 sed -i \

@@ -1,8 +1,11 @@
 <?php
 /* Disk Identificator - shared helpers.
  *
- * Talks to LSI/Avago/Broadcom SAS3 HBAs through sas3ircu, maps Unraid disks
- * to controller:enclosure:slot locations and drives the bay locate LEDs.
+ * Talks to LSI/Avago/Broadcom HBAs through sas3ircu (SAS3) and sas2ircu (SAS2),
+ * maps Unraid disks to controller:enclosure:slot locations and drives the bay locate LEDs.
+ *
+ * Slot keys look like "sas3-0:1:3" = tool sas3, controller 0, enclosure 1, slot 3.
+ * Controller numbers are per tool, so the tool is part of the key.
  */
 
 const DI_PLUGIN    = 'disk.identificator';
@@ -12,18 +15,19 @@ const DI_RUN_DIR   = '/tmp/disk.identificator';
 const DI_INV_FILE  = DI_RUN_DIR.'/inventory.json';
 const DI_STATE_FILE= DI_RUN_DIR.'/leds.json';
 const DI_INV_TTL   = 600; // seconds; bays change rarely, settings page can force a rescan
+const DI_LABEL_MAX = 16;
 const DI_COLORS    = ['red', 'green', 'blue', 'amber', 'white', 'purple'];
-const DI_TOOLS     = ['/usr/local/bin/sas3ircu', '/usr/sbin/sas3ircu', DI_CFG_DIR.'/sas3ircu'];
+const DI_TOOLS     = ['sas3' => '/usr/local/bin/sas3ircu', 'sas2' => '/usr/local/bin/sas2ircu']; // shipped in the plugin package
 
-function di_tool(): ?string {
-  foreach (DI_TOOLS as $path) if (is_file($path) && is_executable($path)) return $path;
-  return null;
+/* Installed tools: ['sas3' => '/usr/local/bin/sas3ircu', ...] */
+function di_tools(): array {
+  return array_filter(DI_TOOLS, fn($path) => is_file($path) && is_executable($path));
 }
 
-/* Run sas3ircu with the given arguments. Returns the combined output. */
-function di_run(array $args, ?int &$rc = null): string {
-  $tool = di_tool();
-  if (!$tool) { $rc = 127; return 'sas3ircu not found'; }
+/* Run sas3ircu/sas2ircu with the given arguments. Returns the combined output. */
+function di_run(string $tool, array $args, ?int &$rc = null): string {
+  $tool = di_tools()[$tool] ?? null;
+  if (!$tool) { $rc = 127; return 'utility not found'; }
   $cmd = escapeshellarg($tool).' '.implode(' ', array_map('escapeshellarg', array_map('strval', $args))).' 2>&1';
   $out = [];
   exec($cmd, $out, $rc);
@@ -93,11 +97,12 @@ function di_norm_sas(?string $addr): string {
   return ltrim($hex, '0') === '' ? '' : str_pad($hex, 16, '0', STR_PAD_LEFT);
 }
 
-function di_key(int $ctrl, int $encl, int $slot): string { return "$ctrl:$encl:$slot"; }
+function di_key(string $ctrl, int $encl, int $slot): string { return "$ctrl:$encl:$slot"; }
 
+/* "sas3-0:1:3" -> ['sas3', 0, 1, 3] */
 function di_parse_key(string $key): ?array {
-  if (!preg_match('/^(\d{1,3}):(\d{1,5}):(\d{1,5})$/', $key, $m)) return null;
-  return [(int)$m[1], (int)$m[2], (int)$m[3]];
+  if (!preg_match('/^(sas[23])-(\d{1,3}):(\d{1,5}):(\d{1,5})$/', $key, $m)) return null;
+  return [$m[1], (int)$m[2], (int)$m[3], (int)$m[4]];
 }
 
 /* ---------- inventory (controllers, enclosures, drives) ---------- */
@@ -107,14 +112,15 @@ function di_inventory(bool $refresh = false): array {
     $inv = json_decode((string)file_get_contents(DI_INV_FILE), true);
     if (is_array($inv)) return $inv;
   }
-  $inv = ['time' => time(), 'tool' => di_tool(), 'controllers' => [], 'error' => ''];
-  if (!$inv['tool']) {
-    $inv['error'] = 'sas3ircu is not installed';
+  $inv = ['time' => time(), 'tools' => di_tools(), 'controllers' => [], 'error' => ''];
+  if (!$inv['tools']) {
+    $inv['error'] = 'sas3ircu / sas2ircu is not installed';
     return $inv;
   }
-  $out = di_run(['list'], $rc);
-  foreach (di_parse_list($out) as $ctrl) {
-    $disp = di_parse_display(di_run([$ctrl['index'], 'display']));
+  foreach (array_keys($inv['tools']) as $tool) foreach (di_parse_list(di_run($tool, ['list'])) as $ctrl) {
+    $ctrl['tool'] = $tool;
+    $ctrl['id'] = "$tool-$ctrl[index]";
+    $disp = di_parse_display(di_run($tool, [$ctrl['index'], 'display']));
     $ctrl['firmware'] = $disp['info']['Firmware version'] ?? '';
     $ctrl['enclosures'] = [];
     foreach ($disp['enclosures'] as $e) {
@@ -131,7 +137,7 @@ function di_inventory(bool $refresh = false): array {
       $encl = (int)$d['Enclosure #'];
       $slot = (int)$d['Slot #'];
       $ctrl['devices'][] = [
-        'key'    => di_key($ctrl['index'], $encl, $slot),
+        'key'    => di_key($ctrl['id'], $encl, $slot),
         'encl'   => $encl,
         'slot'   => $slot,
         'sas'    => di_norm_sas($d['SAS Address'] ?? ''),
@@ -151,7 +157,7 @@ function di_inventory(bool $refresh = false): array {
     $ctrl['enclosures'] = array_values($ctrl['enclosures']);
     $inv['controllers'][] = $ctrl;
   }
-  if (!$inv['controllers']) $inv['error'] = 'No SAS3 controllers found';
+  if (!$inv['controllers']) $inv['error'] = 'No supported SAS controllers found';
   @mkdir(DI_RUN_DIR, 0755, true);
   file_put_contents(DI_INV_FILE, json_encode($inv), LOCK_EX);
   return $inv;
@@ -200,7 +206,7 @@ function di_locate_device(string $dev, string $id, array $inv): ?array {
 /* ---------- settings ---------- */
 
 function di_defaults(): array {
-  return ['dashboard' => true, 'main' => true, 'map' => [], 'colors' => []];
+  return ['dashboard' => true, 'main' => true, 'map' => [], 'colors' => [], 'labels' => []];
 }
 
 function di_config(): array {
@@ -208,6 +214,7 @@ function di_config(): array {
   $cfg = array_merge(di_defaults(), is_array($cfg) ? $cfg : []);
   $cfg['map']    = is_array($cfg['map']) ? $cfg['map'] : [];
   $cfg['colors'] = is_array($cfg['colors']) ? $cfg['colors'] : [];
+  $cfg['labels'] = is_array($cfg['labels']) ? $cfg['labels'] : [];
   return $cfg;
 }
 
@@ -219,7 +226,12 @@ function di_save_config(array $in): array {
     if (di_parse_key((string)$from) && di_parse_key((string)$to) && $from !== $to) $cfg['map'][$from] = $to;
   }
   foreach ((array)($in['colors'] ?? []) as $encl => $color) {
-    if (preg_match('/^\d{1,3}:\d{1,5}$/', (string)$encl) && in_array($color, DI_COLORS, true)) $cfg['colors'][$encl] = $color;
+    if (preg_match('/^sas[23]-\d{1,3}:\d{1,5}$/', (string)$encl) && in_array($color, DI_COLORS, true)) $cfg['colors'][$encl] = $color;
+  }
+  // Location label per slot (e.g. "A3" or "12"), shown next to the ID button.
+  foreach ((array)($in['labels'] ?? []) as $key => $label) {
+    $label = trim((string)preg_replace('/[[:cntrl:]]/u', '', (string)$label));
+    if (di_parse_key((string)$key) && preg_match('/^.{1,'.DI_LABEL_MAX.'}/u', $label, $m)) $cfg['labels'][$key] = $m[0];
   }
   @mkdir(DI_CFG_DIR, 0755, true);
   file_put_contents(DI_CFG_FILE, json_encode($cfg, JSON_PRETTY_PRINT), LOCK_EX);
@@ -231,9 +243,13 @@ function di_target(string $key, array $cfg): string {
   return $cfg['map'][$key] ?? $key;
 }
 
+function di_label(string $key, array $cfg): string {
+  return (string)($cfg['labels'][$key] ?? '');
+}
+
 function di_color(string $target, array $cfg): string {
   $k = di_parse_key($target);
-  return $k ? ($cfg['colors']["$k[0]:$k[1]"] ?? 'red') : 'red';
+  return $k ? ($cfg['colors']["$k[0]-$k[1]:$k[2]"] ?? 'red') : 'red';
 }
 
 /* ---------- LED state ---------- */
@@ -247,7 +263,7 @@ function di_states(): array {
 function di_set_led(string $target, bool $on): array {
   $k = di_parse_key($target);
   if (!$k) return ['ok' => false, 'error' => 'Invalid slot'];
-  $out = di_run([$k[0], 'locate', "$k[1]:$k[2]", $on ? 'ON' : 'OFF'], $rc);
+  $out = di_run($k[0], [$k[1], 'locate', "$k[2]:$k[3]", $on ? 'ON' : 'OFF'], $rc);
   $ok = di_ok($out, $rc);
   if ($ok) {
     @mkdir(DI_RUN_DIR, 0755, true);

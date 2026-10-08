@@ -26,14 +26,19 @@ check('sas: SATA behind HBA', di_norm_sas('4433221-1-0600-0000'), '4433221106000
 check('sas: sysfs form', di_norm_sas("0x50000399683a73ce\n"), '50000399683a73ce');
 check('sas: empty', di_norm_sas('0x0000000000000000'), '');
 
-check('key: parse', di_parse_key('0:1:3'), [0, 1, 3]);
-check('key: reject', di_parse_key('0:1:3;rm'), null);
+check('key: parse', di_parse_key('sas3-0:1:3'), ['sas3', 0, 1, 3]);
+check('key: parse sas2', di_parse_key('sas2-1:2:7'), ['sas2', 1, 2, 7]);
+check('key: reject old format', di_parse_key('0:1:3'), null);
+check('key: reject injection', di_parse_key('sas3-0:1:3;rm'), null);
 
-$cfg = ['map' => ['0:1:3' => '0:1:5'], 'colors' => ['0:1' => 'blue']];
-check('target: remapped', di_target('0:1:3', $cfg), '0:1:5');
-check('target: identity', di_target('0:1:4', $cfg), '0:1:4');
-check('color: per enclosure', di_color('0:1:5', $cfg), 'blue');
-check('color: default', di_color('1:2:0', $cfg), 'red');
+$cfg = ['map' => ['sas3-0:1:3' => 'sas3-0:1:5'], 'colors' => ['sas3-0:1' => 'blue']];
+check('target: remapped', di_target('sas3-0:1:3', $cfg), 'sas3-0:1:5');
+check('target: identity', di_target('sas3-0:1:4', $cfg), 'sas3-0:1:4');
+check('color: per enclosure', di_color('sas3-0:1:5', $cfg), 'blue');
+check('color: other tool same numbers', di_color('sas2-0:1:5', $cfg), 'red');
+check('label: set', di_label('sas3-0:1:3', ['labels' => ['sas3-0:1:3' => 'A4']]), 'A4');
+check('label: empty by default', di_label('sas3-0:1:3', di_defaults()), '');
+
 
 echo $fail ? "\n$fail failed\n" : "\nall passed\n";
 exit($fail ? 1 : 0);
