@@ -1,0 +1,11 @@
+Menu="Buttons"
+Link="nav-user"
+---
+<?
+/* No visible button: a Buttons page with a Link is included in the head of every page,
+ * which is how the identify buttons get into the Dashboard and Main disk tables. */
+?>
+<?if (in_array($task ?? '', ['Dashboard', 'Main'])):?>
+<link type="text/css" rel="stylesheet" href="<?autov('/plugins/disk.identificator/css/diskid.css')?>">
+<script src="<?autov('/plugins/disk.identificator/js/diskid.js')?>"></script>
+<?endif;?>

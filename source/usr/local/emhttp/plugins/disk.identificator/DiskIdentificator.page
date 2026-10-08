@@ -1,0 +1,186 @@
+Menu="Utilities"
+Title="Disk Identificator"
+Icon="lightbulb-o"
+Tag="lightbulb-o"
+---
+<link type="text/css" rel="stylesheet" href="<?autov('/plugins/disk.identificator/css/diskid.css')?>">
+
+<div class="diskid-settings">
+  <div id="diskid-status" class="diskid-status">Scanning controllers...</div>
+
+  <div class="title"><span class="left"><i class="fa fa-sliders title"></i>Display</span></div>
+  <dl>
+    <dt>Show ID column on Dashboard:</dt>
+    <dd><select id="diskid-dashboard"><option value="1">Yes</option><option value="0">No</option></select></dd>
+    <dt>Show ID column on Main:</dt>
+    <dd><select id="diskid-main"><option value="1">Yes</option><option value="0">No</option></select></dd>
+  </dl>
+
+  <div class="title"><span class="left"><i class="fa fa-paint-brush title"></i>LED colour</span></div>
+  <p>Pick the colour of the identification LED on each enclosure, so the buttons match what you see on the bays.</p>
+  <table>
+    <thead><tr><th>Controller</th><th>Enclosure</th><th>Slots</th><th>LED colour</th></tr></thead>
+    <tbody id="diskid-colors"></tbody>
+  </table>
+
+  <div class="title"><span class="left"><i class="fa fa-random title"></i>Slot to LED mapping</span></div>
+  <p>If the backplane LED cables are not wired to the matching slots, the wrong bay lights up.
+     For each slot pick the LED that sits on that bay. Use <b>Test</b> to light the selected LED and check it.</p>
+  <table>
+    <thead><tr><th>Controller</th><th>Enclosure</th><th>Slot</th><th>Disk in slot</th><th>LED to light</th><th></th></tr></thead>
+    <tbody id="diskid-slots"></tbody>
+  </table>
+
+  <input type="button" id="diskid-apply" value="Apply" disabled>
+  <input type="button" id="diskid-reset" value="Reset mapping">
+  <input type="button" id="diskid-rescan" value="Rescan">
+  <input type="button" id="diskid-alloff" value="Turn all LEDs off">
+</div>
+
+<script>
+(function() {
+  var API = '/plugins/disk.identificator/include/api.php';
+  var data = null;
+
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function label(key) {
+    var k = key.split(':');
+    return 'C' + k[0] + ' · Encl ' + k[1] + ' · Slot ' + k[2];
+  }
+  function slots() {
+    var list = [];
+    data.inventory.controllers.forEach(function(c) {
+      c.enclosures.forEach(function(e) {
+        for (var s = e.start; s < e.start + e.slots; s++) list.push({ctrl: c, encl: e, slot: s, key: c.index + ':' + e.encl + ':' + s});
+      });
+    });
+    return list;
+  }
+  function devicesByKey() {
+    var by = {};
+    data.inventory.controllers.forEach(function(c) { c.devices.forEach(function(d) { by[d.key] = d; }); });
+    return by;
+  }
+
+  function render() {
+    var inv = data.inventory, cfg = data.config;
+    var status;
+    if (!inv.tool) {
+      status = '<span class="diskid-error"><i class="fa fa-exclamation-triangle"></i> sas3ircu was not found. Reinstall the plugin or copy sas3ircu to /usr/local/bin.</span>';
+    } else if (inv.error) {
+      status = '<span class="diskid-error"><i class="fa fa-exclamation-triangle"></i> ' + esc(inv.error) + '</span>';
+    } else {
+      status = 'Using <code>' + esc(inv.tool) + '</code>. Controllers: ' + inv.controllers.map(function(c) {
+        return esc('#' + c.index + ' ' + c.type + (c.firmware ? ' (FW ' + c.firmware + ')' : ''));
+      }).join(', ');
+    }
+    $('#diskid-status').html(status);
+    $('#diskid-dashboard').val(cfg.dashboard ? '1' : '0');
+    $('#diskid-main').val(cfg.main ? '1' : '0');
+
+    var colors = [];
+    inv.controllers.forEach(function(c) {
+      c.enclosures.forEach(function(e) {
+        var key = c.index + ':' + e.encl, cur = cfg.colors[key] || 'red';
+        var opts = data.colors.map(function(col) {
+          return '<option value="' + col + '"' + (col === cur ? ' selected' : '') + '>' + col.charAt(0).toUpperCase() + col.slice(1) + '</option>';
+        }).join('');
+        colors.push('<tr><td>#' + c.index + ' ' + esc(c.type) + '</td><td>' + e.encl + (e.id ? ' <span class="diskid-muted">(' + esc(e.id) + ')</span>' : '') +
+          '</td><td>' + e.slots + '</td><td><span class="diskid-btn diskid-' + cur + '" data-swatch="' + key + '"><i class="fa fa-lightbulb-o"></i></span> ' +
+          '<select class="diskid-color" data-encl="' + key + '">' + opts + '</select></td></tr>');
+      });
+    });
+    $('#diskid-colors').html(colors.join('') || '<tr><td colspan="4" class="diskid-muted">No enclosures found</td></tr>');
+
+    var all = slots(), devs = devicesByKey(), rows = [];
+    var options = all.map(function(s) { return '<option value="' + s.key + '">' + label(s.key) + '</option>'; }).join('');
+    all.forEach(function(s) {
+      var d = devs[s.key], name = data.names[s.key], target = cfg.map[s.key] || s.key;
+      var disk = d ? (name ? '<b>' + esc(name) + '</b> · ' : '') + esc(d.model) + ' <span class="diskid-muted">' + esc(d.serial) + '</span>'
+                   : '<span class="diskid-muted">empty</span>';
+      rows.push('<tr data-key="' + s.key + '"' + (target !== s.key ? ' class="diskid-remapped"' : '') + '><td>#' + s.ctrl.index + '</td><td>' + s.encl.encl +
+        '</td><td>' + s.slot + '</td><td>' + disk + '</td><td><select class="diskid-target">' + options + '</select></td>' +
+        '<td><input type="button" class="diskid-test" value="Test"></td></tr>');
+    });
+    $('#diskid-slots').html(rows.join('') || '<tr><td colspan="6" class="diskid-muted">No slots found</td></tr>');
+    $('#diskid-slots tr[data-key]').each(function() {
+      var key = $(this).data('key');
+      $(this).find('.diskid-target').val(cfg.map[key] || key);
+    });
+    paintTests();
+    $('#diskid-apply').prop('disabled', true);
+  }
+
+  function paintTests() {
+    $('#diskid-slots tr[data-key]').each(function() {
+      var target = $(this).find('.diskid-target').val();
+      $(this).find('.diskid-test').val(data.states[target] ? 'Stop' : 'Test');
+    });
+  }
+
+  function collect() {
+    var cfg = {dashboard: $('#diskid-dashboard').val() === '1', main: $('#diskid-main').val() === '1', map: {}, colors: {}};
+    $('#diskid-slots tr[data-key]').each(function() {
+      var key = String($(this).data('key')), target = $(this).find('.diskid-target').val();
+      if (target && target !== key) cfg.map[key] = target;
+    });
+    $('.diskid-color').each(function() { cfg.colors[$(this).data('encl')] = $(this).val(); });
+    return cfg;
+  }
+
+  function fail(msg) { swal({title: 'Disk Identificator', text: String(msg || 'Request failed'), type: 'error'}); }
+
+  function load(refresh) {
+    $('#diskid-status').text(refresh ? 'Rescanning controllers...' : 'Scanning controllers...');
+    $.getJSON(API, {action: 'scan', refresh: refresh ? 1 : 0}).done(function(res) {
+      data = res;
+      render();
+    }).fail(function() { $('#diskid-status').html('<span class="diskid-error">Could not read controller information.</span>'); });
+  }
+
+  function post(params) {
+    params.csrf_token = csrf_token;
+    return $.post(API, params, null, 'json').then(function(res) {
+      if (!res.ok) { fail(res.error); return $.Deferred().reject(); }
+      return res;
+    }, function(xhr) { fail(xhr.statusText); });
+  }
+
+  $(function() {
+    $('.diskid-settings').on('change', 'select', function() {
+      $('#diskid-apply').prop('disabled', false);
+      if ($(this).hasClass('diskid-color')) $('[data-swatch="' + $(this).data('encl') + '"]').attr('class', 'diskid-btn diskid-' + $(this).val());
+      if ($(this).hasClass('diskid-target')) {
+        var tr = $(this).closest('tr');
+        tr.toggleClass('diskid-remapped', $(this).val() !== String(tr.data('key')));
+        paintTests();
+      }
+    });
+    $('#diskid-slots').on('click', '.diskid-test', function() {
+      var target = $(this).closest('tr').find('.diskid-target').val(), on = !data.states[target];
+      post({action: 'test', key: target, on: on ? 1 : 0}).done(function() {
+        if (on) data.states[target] = 1; else delete data.states[target];
+        paintTests();
+      });
+    });
+    $('#diskid-apply').click(function() {
+      post({action: 'save', cfg: JSON.stringify(collect())}).done(function(res) {
+        data.config = res.config;
+        $('#diskid-apply').prop('disabled', true);
+      });
+    });
+    $('#diskid-reset').click(function() {
+      $('#diskid-slots tr[data-key]').each(function() {
+        $(this).removeClass('diskid-remapped').find('.diskid-target').val(String($(this).data('key')));
+      });
+      paintTests();
+      $('#diskid-apply').prop('disabled', false);
+    });
+    $('#diskid-rescan').click(function() { load(true); });
+    $('#diskid-alloff').click(function() {
+      post({action: 'alloff', all: 1}).always(function() { load(false); });
+    });
+    load(false);
+  });
+})();
+</script>

@@ -1,0 +1,158 @@
+Avago Technologies SAS3 IR Configuration Utility.
+Version 15.00.00.00 (2016.11.21) 
+Copyright (c) 2009-2016 Avago Technologies. All rights reserved. 
+
+Read configuration has been initiated for controller 0
+------------------------------------------------------------------------
+Controller information
+------------------------------------------------------------------------
+  Controller type                         : SAS3008
+  BIOS version                            : 8.37.00.00
+  Firmware version                        : 16.00.10.00
+  Channel description                     : 1 Serial Attached SCSI
+  Initiator ID                            : 0
+  Maximum physical devices                : 1023
+  Concurrent commands supported           : 9856
+  Slot                                    : 1
+  Segment                                 : 0
+  Bus                                     : 1
+  Device                                  : 0
+  Function                                : 0
+  RAID Support                            : No
+------------------------------------------------------------------------
+IR Volume information
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+Physical device information
+------------------------------------------------------------------------
+Initiator at ID #0
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 0
+  SAS Address                             : 5000039-9-683a-73ce
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 7630885/1953506645
+  Manufacturer                            : TOSHIBA 
+  Model Number                            : MG06SCA800AY    
+  Firmware Revision                       : EH0D
+  Serial No                               : 59C0A0P6F1LF
+  Unit Serial No(VPD)                     : 59C0A0P6F1LF
+  GUID                                    : 50000399683a73cd
+  Protocol                                : SAS
+  Drive Type                              : SAS_HDD
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 1
+  SAS Address                             : 5000c50-0-bb31-63b1
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 3052360/6251233967
+  Manufacturer                            : SEAGATE 
+  Model Number                            : XS3200LE10003   
+  Firmware Revision                       : 0005
+  Serial No                               : ZD7010NZ
+  Unit Serial No(VPD)                     : ZD7010NZ0000822150Z3
+  GUID                                    : 5000c500bb3163b3
+  Protocol                                : SAS
+  Drive Type                              : SAS_SSD
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 2
+  SAS Address                             : 5000039-9-6863-bb82
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 7630885/1953506645
+  Manufacturer                            : TOSHIBA 
+  Model Number                            : MG06SCA800AY    
+  Firmware Revision                       : EH0D
+  Serial No                               : 59K0A0HPF1LF
+  Unit Serial No(VPD)                     : 59K0A0HPF1LF
+  GUID                                    : 500003996863bb81
+  Protocol                                : SAS
+  Drive Type                              : SAS_HDD
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 3
+  SAS Address                             : 5000039-9-6842-8bc2
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 7630885/1953506645
+  Manufacturer                            : TOSHIBA 
+  Model Number                            : MG06SCA800AY    
+  Firmware Revision                       : EH0D
+  Serial No                               : 59E0A09LF1LF
+  Unit Serial No(VPD)                     : 59E0A09LF1LF
+  GUID                                    : 5000039968428bc1
+  Protocol                                : SAS
+  Drive Type                              : SAS_HDD
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 4
+  SAS Address                             : 4433221-1-0600-0000
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 11444223/23437770751
+  Manufacturer                            : ATA     
+  Model Number                            : TOSHIBA MG07ACA1
+  Firmware Revision                       : GB02
+  Serial No                               : 10F0A02TF9SG
+  Unit Serial No(VPD)                     : 10F0A02TF9SG
+  GUID                                    : 50000399e8caff83
+  Protocol                                : SATA
+  Drive Type                              : SATA_HDD
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 5
+  SAS Address                             : 5000c50-0-302e-6225
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 3052360/6251233967
+  Manufacturer                            : SEAGATE 
+  Model Number                            : XS3200LE10003   
+  Firmware Revision                       : 0005
+  Serial No                               : ZD70101W
+  Unit Serial No(VPD)                     : ZD70101W0000822150Z3
+  GUID                                    : 5000c500302e6227
+  Protocol                                : SAS
+  Drive Type                              : SAS_SSD
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 6
+  SAS Address                             : 5000039-9-6861-16c2
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 7630885/1953506645
+  Manufacturer                            : TOSHIBA 
+  Model Number                            : MG06SCA800AY    
+  Firmware Revision                       : EH0D
+  Serial No                               : 59J0A0QBF1LF
+  Unit Serial No(VPD)                     : 59J0A0QBF1LF
+  GUID                                    : 50000399686116c1
+  Protocol                                : SAS
+  Drive Type                              : SAS_HDD
+
+Device is a Hard disk
+  Enclosure #                             : 1
+  Slot #                                  : 7
+  SAS Address                             : 4433221-1-0400-0000
+  State                                   : Ready (RDY)
+  Size (in MB)/(in sectors)               : 11444223/23437770751
+  Manufacturer                            : ATA     
+  Model Number                            : TOSHIBA MG07ACA1
+  Firmware Revision                       : GB02
+  Serial No                               : 20E0A01CF9SG
+  Unit Serial No(VPD)                     : 20E0A01CF9SG
+  GUID                                    : 50000399f8cbea3d
+  Protocol                                : SATA
+  Drive Type                              : SATA_HDD
+------------------------------------------------------------------------
+Enclosure information
+------------------------------------------------------------------------
+  Enclosure#                              : 1
+  Logical ID                              : 50030480:1a8bee02
+  Numslots                                : 8
+  StartSlot                               : 0
+------------------------------------------------------------------------
+SAS3IRCU: Command DISPLAY Completed Successfully.
+SAS3IRCU: Utility Completed Successfully.

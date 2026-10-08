@@ -1,0 +1,82 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "disk.identificator">
+<!ENTITY author    "vanarebane">
+<!ENTITY version   "2026.10.09">
+<!ENTITY md5       "e78a6a3fa053abb521c4de30de90cb24">
+<!ENTITY github    "vanarebane/unraid-disk-identificator">
+<!ENTITY branch    "main">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/&branch;/&name;.plg">
+<!ENTITY packageURL "https://raw.githubusercontent.com/&github;/&branch;/archive/&name;-&version;-x86_64-1.txz">
+<!ENTITY sas3ircuURL "http://images.45drives.com/tools/sas3ircu">
+<!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
+<!ENTITY cfgdir    "/boot/config/plugins/&name;">
+]>
+
+<PLUGIN name="&name;"
+        author="&author;"
+        version="&version;"
+        launch="Settings/DiskIdentificator"
+        pluginURL="&pluginURL;"
+        support="https://github.com/&github;/issues"
+        icon="lightbulb-o"
+        min="6.12.0">
+
+<CHANGES>
+### 2026.10.09
+- Initial release: identification LED buttons on Dashboard and Main, slot to LED remapping, LED colour per enclosure.
+</CHANGES>
+
+<!-- sas3ircu (Broadcom SAS3 IR configuration utility). Kept on the flash drive so it survives reboots. -->
+<FILE Name="&cfgdir;/sas3ircu">
+<URL>&sas3ircuURL;</URL>
+</FILE>
+
+<!-- Plugin package -->
+<FILE Name="&cfgdir;/&name;-&version;-x86_64-1.txz" Run="upgradepkg --install-new">
+<URL>&packageURL;</URL>
+<MD5>&md5;</MD5>
+</FILE>
+
+<!-- Post install -->
+<FILE Run="/bin/bash">
+<INLINE>
+# remove older package versions from the flash drive
+find &cfgdir; -maxdepth 1 -name '&name;-*.txz' ! -name '&name;-&version;-x86_64-1.txz' -delete
+
+# install sas3ircu unless the user already has one in place
+if [ ! -x /usr/local/bin/sas3ircu ]; then
+  cp &cfgdir;/sas3ircu /usr/local/bin/sas3ircu
+  chmod 755 /usr/local/bin/sas3ircu
+fi
+
+# start with a fresh controller scan
+rm -rf /tmp/&name;
+
+echo ""
+echo "----------------------------------------------------"
+echo " &name; has been installed."
+echo " Version: &version;"
+echo " Settings: Settings > User Utilities > Disk Identificator"
+echo "----------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<!-- Remove -->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+removepkg &name;-&version;-x86_64-1
+rm -rf &plugdir; /tmp/&name;
+# only remove sas3ircu if it is the copy this plugin installed
+if [ -f &cfgdir;/sas3ircu ] &amp;&amp; cmp -s &cfgdir;/sas3ircu /usr/local/bin/sas3ircu; then
+  rm -f /usr/local/bin/sas3ircu
+fi
+rm -f &cfgdir;/*.txz &cfgdir;/sas3ircu
+echo ""
+echo "&name; has been removed. Settings are kept in &cfgdir;/settings.json"
+echo ""
+</INLINE>
+</FILE>
+
+</PLUGIN>

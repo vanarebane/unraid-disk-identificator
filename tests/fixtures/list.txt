@@ -1,0 +1,10 @@
+Avago Technologies SAS3 IR Configuration Utility.
+Version 15.00.00.00 (2016.11.21) 
+Copyright (c) 2009-2016 Avago Technologies. All rights reserved. 
+
+
+         Adapter      Vendor  Device                       SubSys  SubSys 
+ Index    Type          ID      ID    Pci Address          Ven ID  Dev ID 
+ -----  ------------  ------  ------  -----------------    ------  ------ 
+   0     SAS3008       1000h   97h    00h:01h:00h:00h      15d9h   0808h 
+SAS3IRCU: Utility Completed Successfully.

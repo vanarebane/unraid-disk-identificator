@@ -1,2 +1,3 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Unraid runs these files on Linux: keep LF line endings on every platform
+* text=auto eol=lf
+*.txz binary
