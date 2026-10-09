@@ -1,0 +1,20 @@
+Disk Identificator for Unraid
+Copyright (C) 2026 vanarebane
+
+The plugin code in this repository is licensed under the GNU General Public
+License, version 2 (see LICENSE).
+
+Third-party binaries
+--------------------
+The following files are NOT covered by the GPL. They are proprietary utilities
+by Broadcom Inc., redistributed unmodified, and remain subject to Broadcom's
+own license terms:
+
+  source/usr/local/bin/sas3ircu   SAS3IRCU P16 (17.00.00.00), Linux x64
+                                  https://docs.broadcom.com/docs-and-downloads/host-bus-adapters/host-bus-adapters-common-files/sas_sata_12g_p16_point_release/SAS3IRCU_P16.zip
+  source/usr/local/bin/sas2ircu   SAS2IRCU P20 (20.00.00.00), Linux x86
+                                  https://docs.broadcom.com/docs-and-downloads/host-bus-adapters/host-bus-adapters-common-files/sas_sata_6g_p20/SAS2IRCU_P20.zip
+
+They are also included in the plugin package (archive/*.txz).
+LSI, Avago and Broadcom are trademarks of Broadcom Inc. This project is not
+affiliated with or endorsed by Broadcom.

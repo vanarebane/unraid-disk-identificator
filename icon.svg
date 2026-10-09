@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="24" fill="#1f2937"/>
+  <!-- drive bays -->
+  <rect x="20" y="22" width="88" height="22" rx="4" fill="#4b5563"/>
+  <rect x="20" y="53" width="88" height="22" rx="4" fill="#6b7280"/>
+  <rect x="20" y="84" width="88" height="22" rx="4" fill="#4b5563"/>
+  <!-- bay handles -->
+  <rect x="28" y="30" width="44" height="6" rx="3" fill="#374151"/>
+  <rect x="28" y="61" width="44" height="6" rx="3" fill="#4b5563"/>
+  <rect x="28" y="92" width="44" height="6" rx="3" fill="#374151"/>
+  <!-- LEDs: middle bay identified -->
+  <circle cx="94" cy="33" r="4" fill="#374151"/>
+  <circle cx="94" cy="64" r="14" fill="#f97316" opacity="0.35"/>
+  <circle cx="94" cy="64" r="6" fill="#fb923c"/>
+  <circle cx="94" cy="95" r="4" fill="#374151"/>
+</svg>

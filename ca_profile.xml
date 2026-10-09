@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommunityApplications>
+  <Profile>
+    Disk Identificator: a plugin that lights up the identification (locate) LED of a drive bay from the Unraid web UI, for LSI/Avago/Broadcom SAS2 and SAS3 HBAs. Read the README first, and report problems on GitHub issues.
+  </Profile>
+  <Icon>https://raw.githubusercontent.com/vanarebane/unraid-disk-identificator/main/icon.svg</Icon>
+  <WebPage>https://github.com/vanarebane/unraid-disk-identificator</WebPage>
+  <!-- <Forum>https://forums.unraid.net/topic/YOUR_SUPPORT_TOPIC</Forum> -->
+</CommunityApplications>

@@ -63,3 +63,8 @@ tests/parse_test.php              parser tests using real sas3ircu output (php t
 
 To release, run `./build.sh [yyyy.mm.dd]`. It builds `archive/disk.identificator-<version>-x86_64-1.txz` and writes
 the version and MD5 into `disk.identificator.plg`. Add a `<CHANGES>` entry, then commit the `.plg` and the archive together.
+
+## License
+
+The plugin code is licensed under the [GNU General Public License v2](LICENSE).
+The bundled `sas3ircu` and `sas2ircu` are proprietary Broadcom utilities, redistributed unmodified and not covered by the GPL. See [NOTICE](NOTICE).

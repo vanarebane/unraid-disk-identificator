@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Plugin>
+  <Name>Disk Identificator</Name>
+  <PluginAuthor>vanarebane</PluginAuthor>
+  <PluginURL>https://raw.githubusercontent.com/vanarebane/unraid-disk-identificator/main/disk.identificator.plg</PluginURL>
+  <Overview>
+    Light up the identification (locate) LED of a drive bay from the Unraid web UI, so you pull the right disk.
+    Adds an ID button to every disk on the Dashboard and Main pages. Works with LSI/Avago/Broadcom HBAs: sas3ircu for SAS3 cards (SAS3008, SAS3216, SAS3224 and similar) and sas2ircu for SAS2 cards (SAS2008, SAS2308 and similar). Both utilities are bundled.
+    Settings let you set the LED colour per enclosure, remap slots to LEDs when backplane cables are crossed, and add a location label for each bay.
+  </Overview>
+  <Category>Tools:System</Category>
+  <Icon>https://raw.githubusercontent.com/vanarebane/unraid-disk-identificator/main/icon.svg</Icon>
+  <Support>https://github.com/vanarebane/unraid-disk-identificator/issues</Support>
+  <Project>https://github.com/vanarebane/unraid-disk-identificator</Project>
+  <ReadMe>https://github.com/vanarebane/unraid-disk-identificator/blob/main/README.md</ReadMe>
+  <MinVer>6.12.0</MinVer>
+  <License>GPLv2</License>
+</Plugin>
