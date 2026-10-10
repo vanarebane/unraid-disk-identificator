@@ -16,6 +16,7 @@ const DI_INV_FILE  = DI_RUN_DIR.'/inventory.json';
 const DI_STATE_FILE= DI_RUN_DIR.'/leds.json';
 const DI_INV_TTL   = 600; // seconds; bays change rarely, settings page can force a rescan
 const DI_LABEL_MAX = 16;
+const DI_TIMERS    = [0, 10, 20, 30, 300, 600]; // auto-off delays in seconds, 0 = never
 const DI_COLORS    = ['red', 'green', 'blue', 'amber', 'white', 'purple'];
 const DI_TOOLS     = ['sas3' => '/usr/local/bin/sas3ircu', 'sas2' => '/usr/local/bin/sas2ircu']; // shipped in the plugin package
 
@@ -206,7 +207,7 @@ function di_locate_device(string $dev, string $id, array $inv): ?array {
 /* ---------- settings ---------- */
 
 function di_defaults(): array {
-  return ['dashboard' => true, 'main' => true, 'map' => [], 'colors' => [], 'labels' => []];
+  return ['dashboard' => true, 'main' => true, 'timer' => 0, 'map' => [], 'colors' => [], 'labels' => []];
 }
 
 function di_config(): array {
@@ -215,6 +216,7 @@ function di_config(): array {
   $cfg['map']    = is_array($cfg['map']) ? $cfg['map'] : [];
   $cfg['colors'] = is_array($cfg['colors']) ? $cfg['colors'] : [];
   $cfg['labels'] = is_array($cfg['labels']) ? $cfg['labels'] : [];
+  $cfg['timer']  = in_array((int)$cfg['timer'], DI_TIMERS, true) ? (int)$cfg['timer'] : 0;
   return $cfg;
 }
 
@@ -222,6 +224,7 @@ function di_save_config(array $in): array {
   $cfg = di_defaults();
   $cfg['dashboard'] = !empty($in['dashboard']);
   $cfg['main']      = !empty($in['main']);
+  $cfg['timer']     = in_array((int)($in['timer'] ?? 0), DI_TIMERS, true) ? (int)$in['timer'] : 0;
   foreach ((array)($in['map'] ?? []) as $from => $to) {
     if (di_parse_key((string)$from) && di_parse_key((string)$to) && $from !== $to) $cfg['map'][$from] = $to;
   }
@@ -260,7 +263,8 @@ function di_states(): array {
   return is_array($s) ? $s : [];
 }
 
-function di_set_led(string $target, bool $on): array {
+/* Switch a locate LED. With $timer > 0 a background job turns it off again after that many seconds. */
+function di_set_led(string $target, bool $on, int $timer = 0): array {
   $k = di_parse_key($target);
   if (!$k) return ['ok' => false, 'error' => 'Invalid slot'];
   $out = di_run($k[0], [$k[1], 'locate', "$k[2]:$k[3]", $on ? 'ON' : 'OFF'], $rc);
@@ -270,11 +274,17 @@ function di_set_led(string $target, bool $on): array {
     $fp = fopen(DI_STATE_FILE, 'c+');
     flock($fp, LOCK_EX);
     $states = json_decode((string)stream_get_contents($fp), true) ?: [];
-    if ($on) $states[$target] = time(); else unset($states[$target]);
+    // Each switch-on gets a unique token, so a pending auto-off only fires for the switch-on that scheduled it.
+    $token = sprintf('%.6f', microtime(true));
+    if ($on) $states[$target] = $token; else unset($states[$target]);
     ftruncate($fp, 0); rewind($fp);
     fwrite($fp, json_encode($states));
     flock($fp, LOCK_UN);
     fclose($fp);
+    if ($on && $timer > 0) {
+      $job = 'sleep '.(int)$timer.'; /usr/bin/php '.escapeshellarg(__DIR__.'/autooff.php').' '.escapeshellarg($target).' '.escapeshellarg($token);
+      exec('nohup /bin/sh -c '.escapeshellarg($job).' >/dev/null 2>&1 &');
+    }
   }
-  return ['ok' => $ok, 'target' => $target, 'on' => $on, 'error' => $ok ? '' : $out];
+  return ['ok' => $ok, 'target' => $target, 'on' => $on, 'timer' => $on && $ok ? $timer : 0, 'error' => $ok ? '' : $out];
 }

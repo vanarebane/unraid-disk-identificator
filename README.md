@@ -10,8 +10,9 @@ It works with LSI/Avago/Broadcom HBAs through Broadcom's utilities:
 - **Settings > User Utilities > Disk Identificator**:
   - **LED colour** for each controller and enclosure (red, green, blue, amber, white or purple), so the button matches the real LED.
   - **Slot to LED mapping**: if the backplane LED cables are not wired to the matching slots, pick which LED sits on each bay. Use **Test** to check it.
-  - **Location**: an optional label for each bay (a number or code printed on the case), shown left of the ID button.
-    Empty by default. **Copy slot numbers** fills the fields with the slot numbers.
+  - **Location label**: an optional label for each bay (a number or code printed on the case), shown left of the ID button.
+    Empty by default. **Copy Numbers** fills the fields with the slot numbers counted from 1 (slot 0 = 1).
+  - **Turn off indicator timer**: never, 10 s, 20 s, 30 s, 5 min or 10 min. A background job switches the LED off after that time.
   - **Rescan** controllers, and **Turn all LEDs off**.
 
 ## Install
@@ -55,6 +56,7 @@ source/usr/local/emhttp/plugins/disk.identificator/
   DiskIdentificatorButtons.page   invisible "Buttons" page that loads the JS/CSS on Dashboard and Main
   include/common.php              sas3ircu parsing, disk matching, settings, LED state
   include/api.php                 AJAX endpoint
+  include/autooff.php             background job for the turn-off timer
   js/diskid.js                    adds the ID column and keeps it in place across nchan table refreshes
   css/diskid.css
 source/usr/local/bin/sas3ircu, sas2ircu   bundled Broadcom utilities

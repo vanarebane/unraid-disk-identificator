@@ -133,6 +133,8 @@
         if (!res.ok) { alertError(res.error); return; }
         // Several disks can share one LED through the remap; keep them in sync.
         $.each(map.disks, function(n, x) { if (x.target === res.target) x.on = res.on; });
+        // The server switches the LED off by itself after the configured timer; pick that up.
+        if (res.timer > 0) setTimeout(function() { load(false); }, (res.timer + 2) * 1000);
       })
       .fail(function(xhr) { alertError(xhr.statusText || 'Request failed'); })
       .always(function() { delete busy[name]; repaintAll(); });

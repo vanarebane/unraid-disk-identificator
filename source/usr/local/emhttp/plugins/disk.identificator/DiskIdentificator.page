@@ -8,12 +8,21 @@ Tag="lightbulb-o"
 <div class="diskid-settings">
   <div id="diskid-status" class="diskid-status">Scanning controllers...</div>
 
-  <div class="title"><span class="left"><i class="fa fa-sliders title"></i>Display</span></div>
+  <div class="title"><span class="left"><i class="fa fa-sliders title"></i>General</span></div>
   <dl>
     <dt>Show ID column on Dashboard:</dt>
     <dd><select id="diskid-dashboard"><option value="1">Yes</option><option value="0">No</option></select></dd>
     <dt>Show ID column on Main:</dt>
     <dd><select id="diskid-main"><option value="1">Yes</option><option value="0">No</option></select></dd>
+    <dt>Turn off indicator timer:</dt>
+    <dd><select id="diskid-timer">
+      <option value="0">Never</option>
+      <option value="10">10 seconds</option>
+      <option value="20">20 seconds</option>
+      <option value="30">30 seconds</option>
+      <option value="300">5 minutes</option>
+      <option value="600">10 minutes</option>
+    </select></dd>
   </dl>
 
   <div class="title"><span class="left"><i class="fa fa-paint-brush title"></i>LED colour</span></div>
@@ -26,10 +35,10 @@ Tag="lightbulb-o"
   <div class="title"><span class="left"><i class="fa fa-random title"></i>Slot to LED mapping</span></div>
   <p>If the backplane LED cables are not wired to the matching slots, the wrong bay lights up.
      For each slot pick the LED that sits on that bay. Use <b>Test</b> to light the selected LED and check it.</p>
-  <p><b>Location</b> is an optional label for the bay, such as a number or code printed on the case.
+  <p><b>Location label</b> is an optional label for the bay, such as a number or code printed on the case.
      It is shown next to the ID button on the Dashboard and Main pages.</p>
   <table>
-    <thead><tr><th>Controller</th><th>Enclosure</th><th>Slot</th><th>Disk in slot</th><th>Location<input type="button" id="diskid-copyslots" value="Copy slot numbers" title="Fill the location fields with the slot numbers"></th><th>LED to light</th><th></th></tr></thead>
+    <thead><tr><th>Controller</th><th>Enclosure</th><th>Slot</th><th>Disk in slot</th><th>Location label<input type="button" id="diskid-copyslots" value="Copy Numbers" title="Fill the location labels with the slot numbers, counting from 1"></th><th>LED to light</th><th></th></tr></thead>
     <tbody id="diskid-slots"></tbody>
   </table>
 
@@ -81,6 +90,7 @@ Tag="lightbulb-o"
     $('#diskid-status').html(status);
     $('#diskid-dashboard').val(cfg.dashboard ? '1' : '0');
     $('#diskid-main').val(cfg.main ? '1' : '0');
+    $('#diskid-timer').val(String(cfg.timer || 0));
 
     var colors = [];
     inv.controllers.forEach(function(c) {
@@ -103,7 +113,7 @@ Tag="lightbulb-o"
       var disk = d ? (name ? '<b>' + esc(name) + '</b> · ' : '') + esc(d.model) + ' <span class="diskid-muted">' + esc(d.serial) + '</span>'
                    : '<span class="diskid-muted">empty</span>';
       rows.push('<tr data-key="' + s.key + '"' + (target !== s.key ? ' class="diskid-remapped"' : '') + '><td>' + esc(ctrlName(s.ctrl.id)) + '</td><td>' + s.encl.encl +
-        '</td><td>' + s.slot + '</td><td>' + disk + '</td><td><input type="text" class="diskid-loc" maxlength="16" data-slot="' + s.slot + '"></td><td><select class="diskid-target">' + options + '</select></td>' +
+        '</td><td>' + s.slot + '</td><td>' + disk + '</td><td><input type="text" class="diskid-loc" maxlength="16" data-num="' + (s.slot + 1) + '"></td><td><select class="diskid-target">' + options + '</select></td>' +
         '<td><input type="button" class="diskid-test" value="Test"></td></tr>');
     });
     $('#diskid-slots').html(rows.join('') || '<tr><td colspan="7" class="diskid-muted">No slots found</td></tr>');
@@ -124,7 +134,7 @@ Tag="lightbulb-o"
   }
 
   function collect() {
-    var cfg = {dashboard: $('#diskid-dashboard').val() === '1', main: $('#diskid-main').val() === '1', map: {}, colors: {}, labels: {}};
+    var cfg = {dashboard: $('#diskid-dashboard').val() === '1', main: $('#diskid-main').val() === '1', timer: +$('#diskid-timer').val(), map: {}, colors: {}, labels: {}};
     $('#diskid-slots tr[data-key]').each(function() {
       var key = String($(this).data('key')), target = $(this).find('.diskid-target').val(), loc = $.trim($(this).find('.diskid-loc').val());
       if (target && target !== key) cfg.map[key] = target;
@@ -142,6 +152,11 @@ Tag="lightbulb-o"
       data = res;
       render();
     }).fail(function() { $('#diskid-status').html('<span class="diskid-error">Could not read controller information.</span>'); });
+  }
+
+  // Re-read LED states only, so unsaved edits on the page are kept.
+  function refreshStates() {
+    $.getJSON(API, {action: 'scan'}).done(function(res) { data.states = res.states; paintTests(); });
   }
 
   function post(params) {
@@ -165,16 +180,18 @@ Tag="lightbulb-o"
     $('#diskid-slots').on('input', '.diskid-loc', function() { $('#diskid-apply').prop('disabled', false); });
     $('#diskid-copyslots').click(function() {
       var fields = $('#diskid-slots .diskid-loc');
-      var custom = fields.filter(function() { var v = $.trim(this.value); return v && v !== String($(this).data('slot')); }).length;
-      if (custom && !confirm('Replace ' + custom + ' custom location label(s) with slot numbers?')) return;
-      fields.each(function() { this.value = $(this).data('slot'); });
+      var custom = fields.filter(function() { var v = $.trim(this.value); return v && v !== String($(this).data('num')); }).length;
+      if (custom && !confirm('Replace ' + custom + ' custom location label(s) with numbers?')) return;
+      // Bays are counted from 1 for people, slots from 0 by the controller.
+      fields.each(function() { this.value = $(this).data('num'); });
       $('#diskid-apply').prop('disabled', false);
     });
     $('#diskid-slots').on('click', '.diskid-test', function() {
       var target = $(this).closest('tr').find('.diskid-target').val(), on = !data.states[target];
-      post({action: 'test', key: target, on: on ? 1 : 0}).done(function() {
+      post({action: 'test', key: target, on: on ? 1 : 0}).done(function(res) {
         if (on) data.states[target] = 1; else delete data.states[target];
         paintTests();
+        if (res.timer > 0) setTimeout(refreshStates, (res.timer + 2) * 1000);
       });
     });
     $('#diskid-apply').click(function() {

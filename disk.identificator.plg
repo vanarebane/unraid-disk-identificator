@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "disk.identificator">
 <!ENTITY author    "vanarebane">
-<!ENTITY version   "2026.10.09">
-<!ENTITY md5       "59fb294b8ba5fb2a93b7637b7ae9208e">
+<!ENTITY version   "2026.10.10">
+<!ENTITY md5       "110e970dc2d077e3270ef1224da5edce">
 <!ENTITY github    "vanarebane/unraid-disk-identificator">
 <!ENTITY branch    "main">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/&branch;/&name;.plg">
@@ -22,9 +22,10 @@
         min="6.12.0">
 
 <CHANGES>
-### 2026.10.09
+### 2026.10.10
 - Initial release: identification LED buttons on Dashboard and Main, slot to LED remapping, LED colour per enclosure.
 - Location label per slot, shown next to the ID button.
+- Turn off indicator timer (never, 10 s, 20 s, 30 s, 5 min, 10 min).
 - Bundles Broadcom sas3ircu P16 (SAS3 HBAs) and sas2ircu P20 (SAS2 HBAs).
 </CHANGES>
 

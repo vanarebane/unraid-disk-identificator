@@ -50,18 +50,18 @@ case 'scan':
   $inv = di_inventory(!empty($_GET['refresh']));
   $names = [];
   foreach (disk_map($inv, $cfg) as $name => $d) $names[$d['key']] = $name;
-  reply(['ok' => true, 'inventory' => $inv, 'names' => $names, 'states' => di_states(), 'config' => $cfg, 'colors' => DI_COLORS]);
+  reply(['ok' => true, 'inventory' => $inv, 'names' => $names, 'states' => di_states(), 'config' => $cfg, 'colors' => DI_COLORS, 'timers' => DI_TIMERS]);
 
 case 'locate':
   $name = (string)($_POST['name'] ?? '');
   $map = disk_map(di_inventory(), $cfg);
   if (!isset($map[$name])) reply(['ok' => false, 'error' => "Disk '$name' is not on a supported controller"]);
-  $res = di_set_led($map[$name]['target'], !empty($_POST['on']));
+  $res = di_set_led($map[$name]['target'], !empty($_POST['on']), $cfg['timer']);
   $res['color'] = $map[$name]['color'];
   reply($res);
 
 case 'test':
-  reply(di_set_led((string)($_POST['key'] ?? ''), !empty($_POST['on'])));
+  reply(di_set_led((string)($_POST['key'] ?? ''), !empty($_POST['on']), $cfg['timer']));
 
 case 'alloff':
   // all=1 also switches off LEDs turned on outside the plugin (e.g. from the console).
